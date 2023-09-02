@@ -1,0 +1,65 @@
+
+\section{Transactions Theory}
+\subsection{Transaction Definition}
+\paragraph{} A \textbf{Transaction} is a set of multiple operations performed on the database as a single logical unit; taking place as a whole or not at all. Transactions allow correct recovery from failures and keep the database consistent even in case of system failure.
+\subsection{\acs{ACID} Properties}
+\paragraph{\acf{ACID}} These four database transaction properties ensure the correctness of a transaction even during system failures.
+\begin{itemize}
+	\item \textbf{Atomicity} says that all SQL operations within a transaction are treated as a single logical unit of work, which can either succeed or fail as a whole.
+	\item \textbf{Consistency} ensures that one transaction will only bring the database from one consistent state to another, preserving database invariants. Any changes made to the database must be valid according to all defined rules: constraints, cascades, triggers and their combination. Referential integrity guarantees the primary-foreign key relationship.
+	\item \textbf{Isolation}; Transactions happen concurrently (multiple transactions read and write to a table at the same time). Isolation ensures that concurrent execution of transactions leaves the database in the same state that would have been if the transactions were executed sequentially. Isolation is the main goal of concurrency control; depending on the isolation level used, the effects of an incomplete transaction may or may not be visible to other transactions.
+	\item \textbf{Durability} is the property which ensures that the changes of a successful transaction, once committed; are permanent and should remain even in case of system failure.
+\end{itemize}
+\paragraph{} For more on \acs{ACID} please see here: \href{https://en.wikipedia.org/wiki/ACID}{\acs{ACID} - Wikipedia} and here: \href{https://dev.mysql.com/doc/refman/8.0/en/mysql-acid.html}{MySQL - ACID}.
+\paragraph{} For more on Concurrency Control please see here: \href{https://en.wikipedia.org/wiki/Concurrency_control}{Concurrency Control - Wikipedia}.
+\subsection{Transaction Isolation Read Phenomena}
+\paragraph{} \textbf{Read phenomena} refers to three different read phenomena, when one transaction retrieves data that another transaction may have updated.
+\begin{itemize}
+	\item \textbf{Dirty Reads}. A Dirty Read (uncommitted dependency) occurs when one transaction retrieves data that have been changed by another transaction that are not yet committed.
+	\item \textbf{Non-Repeatable Reads}.  A Non Repeatable Read occurs when a transaction retrieves a set of data more than once, but reads different data each time because other transactions have changed them.
+	\item \textbf{Phantom Reads}. A Phantom Read occurs when a transaction retrieves a set of data more than once, sees same data each time, however other transactions have changed them.
+\end{itemize}
+\subsection{Transaction Isolation Levels}
+\paragraph{} The aim of \textbf{Transaction Isolation Levels} is to control the behavior of concurrent transactions. There are four isolation levels:
+\begin{itemize}
+	\item \textbf{Read Uncommitted} or \textbf{Dirty Reads}. The lowest isolation level. In this level, one transaction may see not yet committed changes made by other transactions.\\\textbf{Concurrency Effects:} Dirty Reads, Non-Repeatable Reads and Phantom Reads.\\\textbf{Solves:} -.
+	\item \textbf{Read Committed}. In this isolation level, the transaction will see only committed changes by other transactions.\\\textbf{Concurrency Effects:} Non-Repeatable Reads and Phantom Reads.\\\textbf{Solves:} Dirty Reads.
+	\item \textbf{Repeatable Reads}. Guarantees that already retrieved data will be the same in that transaction if retrieved again, even if they are changed by other transactions.\\\textbf{Concurrency Effects:} Phantom Reads.\\\textbf{Solves:} Dirty Reads, Non-Repeatable Reads.
+	\item \textbf{Serializable} is the highest isolation level. This isolation level blocks other transactions from changing retrieved data.\\\textbf{Concurrency Effects:} Higher chances for deadlocks.\\\textbf{Solves:} Dirty Reads, Non-Repeatable Reads, Phantom Reads.
+\end{itemize}
+\paragraph{} A lower isolation level increases concurrency and performance but can result in data inconsistencies. On the other hand, higher isolation increases data consistency but also decreases concurrency and performance. Also Deadlocks may occur more often the higher the isolation level is.
+\paragraph{} The default isolation level varies on each \acs{DBMS}.
+\subsection{Starvation and Deadlock}
+\paragraph{} \textbf{Starvation} is a problem in concurrent computing where a process is continuously denied access to necessary resources to complete its task.
+\paragraph{} \textbf{Deadlock} is a form of \textbf{Starvation}. Deadlock can occur for example when Transaction 1 requires to lock resources A and B, acquires lock for Resource A but resource B is already locked by another Transaction 2 and the Transaction 2 also requires to lock Resource A which is already locked by Transaction 1. As a result neither transaction can complete until the other one releases the acquired resource.
+\paragraph{} Some \acs{DBMS} don't use locks for concurrency control but \textbf{Snapshots}. For more on this please see: \href{https://en.wikipedia.org/wiki/Snapshot_isolation}{Snapshot Isolation - Wikipedia}.
+\paragraph{} For more on Isolation Levels please see here: \href{https://en.wikipedia.org/wiki/Isolation_(database_systems)}{Isolation Levels - Wikipedia}.
+\subsection{Types of Locks (Lock Modes) \& Levels of Locking in \acs{DBMS}}
+\paragraph{} \textbf{Database Hierarchy}\\Database $\rightarrow$ Table space $\rightarrow$ Table $\rightarrow$ Partition $\rightarrow$ Page $\rightarrow$ Tuple (Row/Record)
+\paragraph{} \textbf{There are four levels of locking in \acs{DBMS}}
+\begin{itemize}
+	\item \textbf{Database Level}: Full database is locked. Not suitable for multi-user \acs{DBMS}.
+	\item \textbf{Table Level}: Full table is locked. Not suitable for multi-user \acs{DBMS}.
+	\item \textbf{Page Level}: The page always consists of a fixed size. A table can span to several pages and each page can contain several records/rows. Suitable for multi-user \acs{DBMS}.
+	\item \textbf{Row Level}: Locks only single rows. It is less restrictive but more resource costly.
+\end{itemize}
+\paragraph{} \textbf{Types of Locks (Lock Modes)}
+\subparagraph{} \textbf{Page and Row Lock Modes}
+\begin{itemize}
+	\item \textbf{X lock (Exclusive):} This lock type ensures that a page or row will be reserved exclusively for the transaction that imposed the exclusive lock, as long as the transaction holds the lock.\\The Exclusive lock will be imposed by the transaction when it wants to modify the page or row data, which is in the case of DML statements INSERT, DELETE, UPDATE.\\An exclusive lock can only be imposed to a page or row, only if there is no other exclusive or shared lock for that page or row.
+	\item \textbf{S lock (Shared):} This lock will reserve a page or row only for reading, which means any other transaction will be prevented from modifying the locked page or row as long as the lock is active. A shared lock can be imposed many times at the same page or record at the same time.
+	\item \textbf{U lock (Update):} Is similar to exclusive lock but is designed to be more flexible. It can be imposed only on a page or row that already has a shared lock. Once the transaction that holds the update lock is ready to change the data, the lock will be changed to an exclusive lock.
+	\item \textbf{Note:} X, S and U locks can also be used on higher level \acs{DB} objects like table or tablespace, but it is not recommended.
+\end{itemize}
+\subparagraph{} \textbf{Table Space, Table and Partition Lock Modes}
+\begin{itemize}
+	\item \textbf{I lock (Intent):} This kind of lock is a means used by a transaction to inform other transactions about its intention to acquire a lock. When a transaction wants to acquire a lock on a row, it will first acquire an intention lock on the table. This is very important from performance aspect, as the \acs{DBMS} will only inspect Intent Locks on table level to check if it's possible to acquire the lock, without having to check each page/row.
+	\item \textbf{IX lock (Intent Exclusive):} Indicates that the transaction has the intention to modify lower hierarchy resources by acquiring X locks individually on them.
+	\item \textbf{IS lock (Intent Shared):} Similar to IX, but for intention to read only.
+	\item \textbf{IU lock (Intent Update):} Can be acquired only at page level and as soon as the operation takes place it is converted to IX lock.
+\end{itemize}
+\paragraph{}
+\begin{itemize}
+	\item For more on locks please see here: \href{https://dev.mysql.com/doc/refman/8.0/en/innodb-locking.html}{InnoDB Locking - MySQL}.
+	\item For more on table locks see here: \href{https://dev.mysql.com/doc/refman/8.0/en/lock-tables.html}{Table Locks - MySQL}.
+\end{itemize}

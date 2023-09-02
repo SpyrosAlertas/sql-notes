@@ -1,0 +1,64 @@
+
+\usepackage[]{geometry}
+
+\usepackage{titling} % center cover page
+\renewcommand\maketitlehooka{\null\vfill} % center cover page
+\renewcommand\maketitlehookd{\vfill\null} % center cover page
+
+\usepackage{tocloft} % add dots for sections in table of contents
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}} % add dots for sections in table of contents
+
+\usepackage{hyperref} % make table of contents clickable
+\hypersetup{ % remove default ugly look of links
+	colorlinks,
+	citecolor=black,
+	filecolor=black,
+	linkcolor=black,
+	urlcolor=black
+}
+
+%\AddToHook{cmd/section/before}{\clearpage} % each section starts on new page
+
+\usepackage{acronym} % acronyms
+
+\usepackage{graphicx} % required to load images
+\graphicspath{ {./source-items/imgs/} }
+
+\usepackage{listings} % to format SQL code
+
+\usepackage{color} % to format SQL code
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{language=SQL,	% to format SQL code
+	basicstyle={\small\ttfamily},
+	belowskip=3mm,
+	breakatwhitespace=true,
+	breaklines=true,
+	classoffset=0,
+	columns=flexible,
+	commentstyle=\color{dkgreen},
+	framexleftmargin=0.25em,
+	frameshape={}{}{}{},	% to add to vertical lines on left, set `frameshape={}{YY}{}{}`
+	keywordstyle=\color{blue},
+%	numbers=left,	% if you want line numbers, set `numbers=left`
+%	numberstyle=\tiny\color{gray},
+	showstringspaces=false,
+	stringstyle=\color{mauve},
+	tabsize=3,
+	xleftmargin =1em,
+	escapeinside={(@*}{*@)}
+}
+
+\lstdefinestyle{DOS}	% to format cmd code
+{
+	backgroundcolor=\color{black},
+	basicstyle=\scriptsize\color{white}\ttfamily
+}
+
+\usepackage{subfig}
+
+\usepackage{float}
+

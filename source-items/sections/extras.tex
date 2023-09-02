@@ -1,0 +1,128 @@
+
+\section{Extras}
+\subsection{Database Object Hierarchy}
+\begin{enumerate}
+	\item \textbf{\acs{DBMS}:} The software that contains the databases and provides the ways we can interact with it.
+	\item \textbf{\acl{DB}:} Contains all the objects of the database (Tables/Triggers/Sequences/etc).
+	\item \textbf{Tablespace}: Contains tables, indexes and other large objects and data. It is used to organize the \acs{DB} into logical groups.
+	\item \textbf{Table}: Is used to store data that have a specific structure.
+	\item \textbf{Partition}: A table is split into partitions (when it contains a lot of data).
+\end{enumerate}
+\subsection{SQL Hints}
+\subsection{DB Links}
+\paragraph{} Note that currently DB Links are not supported by MySQL. We will only see a few basic things about how they work in Oracle \acs{SQL}.
+\begin{lstlisting}[language=SQL]
+-- DB Links allow a DB user to access another database
+
+select * from dba_db_links; -- all DB links defined in the database
+select * from all_db_links; -- all DB links that current user has access to
+select * from user_db_links; -- all DB links owned by current user
+
+-- Private vs Public DB Links
+-- Private DB Links can be used only by their owner
+-- Public DB Links can be used by any DB user assuming the user has privileges to access the other database
+
+-- Create Public DB Link
+create public database link dblink
+connect to product_db_username identified by product_db_password
+using '<oracle_sid>'; -- sid: service id
+
+-- Create Private DB Link
+create database link dblink
+connect to product_db_username identified by product_db_password
+using '<oracle_sid>'; -- sid: service id
+
+-- Using DB Links
+select * from tablename@dblink; -- tablename any table from remote db and @ means what follows is a db link
+\end{lstlisting}
+\subsection{Performance Tips}
+\paragraph{} When working in real production databases with millions of records, it is important to understand the performance of the queries you write and optimize them as much as possible. In this section we will see some tips about this.
+\begin{itemize}
+	\item Use Partition and Primary Keys.
+	\item Limit fetched results from tables using conditions in where clause.
+	\item Select only required columns from tables.
+	\item Use same datatype in conditions in where clause.
+	\item Use SQL Hints.
+	\item Use Explain.
+\end{itemize}
+\paragraph{} Now let's understand the above in detail:
+\begin{itemize}
+	\item \textbf{Use Partition and Primary Keys.} This is the most important part to speed up query execution. Tables are split into partitions. By using Partition and Primary Keys, the \acs{DBMS} will know in which partition to search into and thus limiting a lot the data it will search to.
+	\item \textbf{Limit fetched results from tables using conditions in where clause.} This is important, especially when joining many tables together, to limit the results fetched from each table as much as possible.
+	\item \textbf{Select only required columns from tables.} In real databases, tables can consist of many columns, and some columns may hold large data. Loading every column can impact performance and use more resources on the system. Especially columns with large data should be avoided as much as possible.
+	\item \textbf{Use same datatype in conditions in where clause.} For example, if one column has stored numbers as varchar(5) in your query you should do select * from table where columnA = \lq12345\rq; and not select * from table where columnA = 12345;. While both work, if you run the second query, it will cause the DBMS to convert each fetched row from char to number. In a huge database this can be a significant slowdown factor.
+	\item \textbf{Use SQL Hints} to instruct the \acs{DB} engine how to execute the query. The \acs{DB} engine does optimize the queries, but not always in the best possible way.
+	\item \textbf{Use Explain} to understand the complexity of the query before running it.
+	\begin{lstlisting}[language=SQL]
+-- Use explain to see the complexity of below query
+select		a.first_name, a.last_name, count(b.book_id) number_of_books -- print only first, last name and number of books
+from		author a
+left join	book b
+on			a.author_id = b.author_id -- Up to here we just joined the all authors with their books
+group by	a.author_id -- now we group by the results by author_id
+order by	number_of_books desc
+limit		1; -- MySQL only
+
+-- Explain
+explain
+select		a.first_name, a.last_name, count(b.book_id) number_of_books -- print only first, last name and number of books
+from		author a
+left join	book b
+on			a.author_id = b.author_id -- Up to here we just joined the all authors with their books
+group by	a.author_id -- now we group by the results by author_id
+order by	number_of_books desc
+limit		1; -- MySQL only
+	\end{lstlisting}
+\end{itemize}
+\subsection{Global and Session Variables}
+\paragraph{} On SQL there are two scopes for System Variables: 1. Session and 2. Global. The session variables affect the operation of the individual client connection only, while global variables will affect all new client sessions that will start after the change takes effect. When the server starts, it loads the default values to global variables and then session variables are initialized from the global variables.
+\begin{lstlisting}[language=SQL]
+-- Global Variables
+select @@global.autocommit; -- check default initial value
+
+set global autocommit = 0; -- change to 0 or 1 based on what you had before and see it changed to the new value
+set @@global.autocommit = 0;
+-- Try to restart the session or even the server and see the global variable is the same
+set @@global.autocommit = 1; -- revert to orinal value again - for me it was 151
+
+-- Persisting Global Variables to mysqld-auto.cnf - these values will be loaded to global variables upon server restart
+set persist autocommit = 0;
+set @@persist.autocommit = 0;
+
+reset persist; -- remove peristed system variables
+
+-- Session Variables
+select @@autocommit; -- check default initial value
+select @@global.autocommit; -- see global variable remains unchanged
+
+set autocommit = 0; -- or
+set @@autocommit = 0; -- or
+set @@session.autocommit = 0;
+
+-- Find variables global and session
+show global variables like '%auto%';
+show variables like '%auto%';
+
+-- Three important System Variables are:
+-- 1. autocommit: If it's ON/1 it means that executing a DML Command, it will be autocommitted - no option to rollback
+-- 2. sql_safe_updates: If it's ON/1 it means that DML commands like Update & Delete are allowed to be executed only when a primary key is included in the where clause
+-- 3. sql_mode: This defines the behavior of the session. The default values are there for a reason and you should not mess with these unless you really know what you are doing
+select @@global.sql_mode; -- global (default) sql_mode settings
+select @@sql_mode; -- session sql_mode settings
+\end{lstlisting}
+\paragraph{} Note: In some systems like MySQL Workbench, some settings may have to be configured also in the application settings, otherwise global/variables are skipped.
+\subsection{Start/Stop MySQL Server via CMD}
+\begin{lstlisting}[style=DOS]
+-- Stop MySQL Server on Windows from cmd
+net stop MySQL80
+
+-- Start MySQL Server on Windows from cmd
+net start MySQL80
+\end{lstlisting}
+\subsection{Section Notes}
+\begin{itemize}
+	\item For all the commands of this section \href{file:./source-items/sql/6-sql-extras.sql}{click here}.
+	%	\item For more on MySQL Datatypes \href{https://dev.mysql.com/doc/refman/8.0/en/data-types.html}{click here}.
+	\item For more on Table Partitioning \href{https://dev.mysql.com/doc/mysql-partitioning-excerpt/8.0/en/partitioning-types.html}{click here}.
+	\item For more on System Variables \href{https://dev.mysql.com/doc/refman/8.0/en/using-system-variables.html}{click here}.
+\end{itemize}
